@@ -15,4 +15,6 @@ services:
     build:
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "80:80"
+    volumes: # Remove later
+      - ./app:/app
