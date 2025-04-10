@@ -45,5 +45,6 @@ class PostgresAPI:
         print("Соединение с базой данных закрыто.")
 
 
-with PostgresAPI() as db:
-    db.insert("1", "1", "1")
+# with PostgresAPI() as db:
+#     print(db.insert("1", "1", "1"))
+
