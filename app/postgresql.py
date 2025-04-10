@@ -2,7 +2,7 @@ import psycopg2
 import time
 
 class PostgresAPI:
-    def __init__(self, dbname="database", user="user", password="strong_password", host="db", port="5432"):
+    def __init__(self, dbname="database", user="user", password="strong_password", host="postgres_container", port="5432"):
         self.dbname = dbname
         self.user = user
         self.password = password
@@ -11,15 +11,15 @@ class PostgresAPI:
         self.connection = None
         self.cur = None
 
-    def create_table(self, table_name):
+    def insert(self, video_size, encoding_time, decoding_time):
         self.cur.execute(f"""   
-            CREATE TABLE IF NOT EXISTS {table_name} (
-                id SERIAL PRIMARY KEY,
-                server VARCHAR(100),
-                cost INTEGER
-            );
-        """)
+            INSERT INTO videos (video_size, encoding_time, decoding_time)
+            VALUES (%s, %s, %s)
+            RETURNING id;
+            """, (video_size, encoding_time, decoding_time))
+        video_id = self.cur.fetchone()[0]
         self.connection.commit()
+        return video_id
 
     def __enter__(self):
         while True:
@@ -33,8 +33,8 @@ class PostgresAPI:
                 )
                 self.cur = self.connection.cursor()
                 return self
-            except:
-                print("faile")
+            except Exception as e:
+                print(e)
                 time.sleep(5)
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -46,4 +46,4 @@ class PostgresAPI:
 
 
 with PostgresAPI() as db:
-    db.create_table("videos")
+    db.insert("1", "1", "1")

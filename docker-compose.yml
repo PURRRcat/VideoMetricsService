@@ -1,7 +1,7 @@
 services:
-  db:
+  postgresql:
     image: postgres:15
-    container_name: pg_data_base
+    container_name: postgres_container
     restart: always
     environment:
       POSTGRES_USER: user
@@ -9,12 +9,22 @@ services:
       POSTGRES_DB: database
     volumes:
       - ./pgdata:/var/lib/postgres/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
+    networks:
+      - network
   server-api:
+    container_name: server_container
     build:
       dockerfile: Dockerfile
     ports:
       - "80:80"
-    volumes: # Remove later
-      - ./app:/app
+    depends_on:
+      - postgresql
+    networks:
+      - network
+
+networks:
+  network:
+    driver: bridge

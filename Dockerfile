@@ -1,7 +1,7 @@
 FROM debian:bullseye
 
 RUN apt-get update && apt-get install -y \
-    iputils \
+    iputils-ping \
     python3 \
     python3-pip \
     python3-gi \
@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     gstreamer1.0-libav \
     gstreamer1.0-tools \
     libcairo2-dev \
+    postgresql-client \
     && apt-get clean
 
 
