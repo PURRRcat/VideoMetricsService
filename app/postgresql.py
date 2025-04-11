@@ -11,15 +11,31 @@ class PostgresAPI:
         self.connection = None
         self.cur = None
 
-    def insert(self, video_size, encoding_time, decoding_time):
+    def insert(self):
         self.cur.execute(f"""   
-            INSERT INTO videos (video_size, encoding_time, decoding_time)
-            VALUES (%s, %s, %s)
-            RETURNING id;
-            """, (video_size, encoding_time, decoding_time))
-        video_id = self.cur.fetchone()[0]
+                    INSERT INTO videos
+                    DEFAULT VALUES
+                    RETURNING id, status;
+                    """)
+        video_id, status = self.cur.fetchone()
         self.connection.commit()
-        return video_id
+        return video_id, status
+
+    def insert_status(self, status, video_id):
+        self.cur.execute(f"""   
+                    UPDATE videos
+                    SET status = %s
+                    WHERE id = %s;;
+                    """, (status, video_id))
+        self.connection.commit()
+
+    def insert_values(self, video_size, encoding_time, decoding_time, video_id):
+        self.cur.execute(f"""   
+            UPDATE videos 
+            SET video_size = %s, encoding_time = %s, decoding_time = %s
+            WHERE id = %s;;
+            """, (video_size, encoding_time, decoding_time, video_id))
+        self.connection.commit()
 
     def get_id(self, video_id):
         self.cur.execute("""
@@ -28,6 +44,14 @@ class PostgresAPI:
             WHERE id = %s;
             """, (video_id,))
         return self.cur.fetchone()
+
+    def get_status(self, video_id):
+        self.cur.execute("""
+                    SELECT status
+                    FROM videos
+                    WHERE id = %s;
+                    """, (video_id,))
+        return self.cur.fetchone()[0]
 
     def delete_video(self, video_id):
         self.cur.execute("""
