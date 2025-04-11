@@ -21,7 +21,7 @@ def post_item(video_data: VideoData):
 def read_item(video_id: int):
     with PostgresAPI() as db:
         video_size, encoding_time, decoding_time = db.get_id(video_id)
-    return {"video_size": video_size, "encoding_time": encoding_time, "decoding_time": decoding_time}
+    return {f"video_size: {video_size:.2f} MB, encoding_time: {encoding_time:.2f} sec, decoding_time: {decoding_time:.2f} sec"}
 
 @app.delete("/video/{video_id}")
 def read_item(video_id: int):

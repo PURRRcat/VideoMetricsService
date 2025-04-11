@@ -17,7 +17,14 @@ params = {
     "VP9": "vp9enc cpu-used=8 ! webmmux" # оно того не стоит
 }
 
-
+def get_time(pipeline_str):
+    pipeline = Gst.parse_launch(pipeline_str)
+    pipeline.set_state(Gst.State.PLAYING)
+    bus = pipeline.get_bus()
+    bus.timed_pop_filtered(Gst.CLOCK_TIME_NONE, Gst.MessageType.EOS)
+    encoding_time = pipeline.get_current_running_time() / Gst.SECOND
+    pipeline.set_state(Gst.State.NULL)
+    return encoding_time
 
 def encode_and_decode(input_path = "sample.mp4", codec = "H.264"):
 
@@ -35,25 +42,9 @@ def encode_and_decode(input_path = "sample.mp4", codec = "H.264"):
         f"filesrc location=/videos/{out_name[codec]} ! decodebin ! videoconvert ! fakesink"
     )
 
-    pipeline = Gst.parse_launch(pipeline_encoding)
-    pipeline.set_state(Gst.State.PLAYING)
-    bus = pipeline.get_bus()
-    bus.timed_pop_filtered(Gst.CLOCK_TIME_NONE, Gst.MessageType.EOS)
-    encoding_time = pipeline.get_current_running_time() / Gst.SECOND
-    pipeline.set_state(Gst.State.NULL)
+    encoding_time = get_time(pipeline_encoding)
+    file_size = os.path.getsize(f"/videos/{out_name[codec]}") / (1024 * 1024)
+    decoding_time = get_time(pipeline_decoding)
 
-    file_size = os.path.getsize(f"/videos/{out_name[codec]}")
-
-    pipeline = Gst.parse_launch(pipeline_decoding)
-    pipeline.set_state(Gst.State.PLAYING)
-    bus = pipeline.get_bus()
-    bus.timed_pop_filtered(Gst.CLOCK_TIME_NONE, Gst.MessageType.EOS)
-    decoding_time = pipeline.get_current_running_time() / Gst.SECOND
-    pipeline.set_state(Gst.State.NULL)
-
-    print(file_size, encoding_time, decoding_time)
     with PostgresAPI() as db:
         return db.insert(file_size, encoding_time, decoding_time)
-
-
-# print (encode_video("../videos/sample.mp4", "../videos/out_sample.mp4", "x264enc"))
