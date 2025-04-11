@@ -21,6 +21,21 @@ class PostgresAPI:
         self.connection.commit()
         return video_id
 
+    def get_id(self, video_id):
+        self.cur.execute("""
+            SELECT video_size, encoding_time, decoding_time
+            FROM videos
+            WHERE id = %s;
+            """, (video_id,))
+        return self.cur.fetchone()
+
+    def delete_video(self, video_id):
+        self.cur.execute("""
+            DELETE FROM videos
+            WHERE id = %s;
+        """, (video_id,))
+        self.connection.commit()
+
     def __enter__(self):
         while True:
             try:
