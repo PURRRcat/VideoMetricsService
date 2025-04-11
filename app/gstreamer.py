@@ -4,20 +4,35 @@ gi.require_version('Gst', '1.0')
 from gi.repository import Gst
 from postgresql import PostgresAPI
 
-def encode_and_decode(input_path = "/videos/sample.mp4", codec = "x264enc"):
+out_name = {
+    "AV1": "output_av1.webm",
+    "H.264": "output_h264.mp4",
+    "H.265": "output_h265.mp4",
+    "VP9": "output_vp9.webm"
+}
+params = {
+    "AV1": "av1enc cpu-used=8 ! webmmux", # не запускайте _)
+    "H.264": "x264enc ! mp4mux",
+    "H.265": "x265enc ! h265parse ! mp4mux",
+    "VP9": "vp9enc cpu-used=8 ! webmmux" # оно того не стоит
+}
 
-    if (not os.path.exists(input_path) or
-            not codec in ["x264enc", "x265enc", "vp9enc", "av1enc"]):
-        return -1
+
+
+def encode_and_decode(input_path = "sample.mp4", codec = "H.264"):
+
+    if (not os.path.exists(f"/videos/{input_path}") or
+            not codec in out_name.keys()):
+        return f"videos/{input_path}"
 
     Gst.init(None)
 
     pipeline_encoding = (
-        f"filesrc location={input_path} ! decodebin "
-        f"! {codec} ! mp4mux ! filesink location=/videos/encoded "
+        f"filesrc location=/videos/{input_path} ! decodebin "
+        f"! {params[codec]} ! filesink location=/videos/{out_name[codec]} "
     )
     pipeline_decoding = (
-        f"filesrc location=/videos/encoded ! decodebin ! filesink location=/videos/output.mp4"
+        f"filesrc location=/videos/{out_name[codec]} ! decodebin ! videoconvert ! fakesink"
     )
 
     pipeline = Gst.parse_launch(pipeline_encoding)
@@ -27,7 +42,7 @@ def encode_and_decode(input_path = "/videos/sample.mp4", codec = "x264enc"):
     encoding_time = pipeline.get_current_running_time() / Gst.SECOND
     pipeline.set_state(Gst.State.NULL)
 
-    file_size = os.path.getsize("/videos/encoded")
+    file_size = os.path.getsize(f"/videos/{out_name[codec]}")
 
     pipeline = Gst.parse_launch(pipeline_decoding)
     pipeline.set_state(Gst.State.PLAYING)
